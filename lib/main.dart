@@ -13,9 +13,9 @@ void main() {
   runApp(const MyApp());
 }
 
-/// Example app for Camera Windows plugin.
+// This is the main application widget.
 class MyApp extends StatefulWidget {
-  /// Default Constructor
+  // Default Constructor
   const MyApp({super.key});
 
   @override
@@ -23,19 +23,37 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  String _cameraInfo = 'Unknown';
+  String _cameraInfo = 'Unknown'; // Stores camera information
   List<CameraDescription> _cameras = <CameraDescription>[];
   int _cameraIndex = 0;
   int _cameraId = -1;
-  bool _initialized = false;
-  bool _recording = false;
+  bool _initialized = false; // Indicates if the camera is initialized
+  bool _recording = false; // Indicates if video recording is in progress
   bool _recordingTimed = false;
-  bool _recordAudio = true;
-  bool _previewPaused = false;
-  Size? _previewSize;
-  ResolutionPreset _resolutionPreset = ResolutionPreset.veryHigh;
-  StreamSubscription<CameraErrorEvent>? _errorStreamSubscription;
-  StreamSubscription<CameraClosingEvent>? _cameraClosingStreamSubscription;
+  bool _recordAudio = true; // Indicates if audio recording is enabled
+  bool _previewPaused = false; // Indicates if the camera preview is paused
+  Size? _previewSize; // Stores the size of the camera preview
+  ResolutionPreset _resolutionPreset =
+      ResolutionPreset.veryHigh; // Camera resolution preset
+  StreamSubscription<CameraErrorEvent>?
+      _errorStreamSubscription; // Subscription to camera error events
+  StreamSubscription<CameraClosingEvent>?
+      _cameraClosingStreamSubscription; // Subscription to camera closing events
+  double brightnessLevel =
+      50; // Initialize the brightness level to 50 (or your preferred initial value).
+bool _isMirrored = false; // Initial state: not mirrored
+bool _screenSize = false; // Initial state: not mirrored
+
+void _toggleMirror() {
+  setState(() {
+    _isMirrored = !_isMirrored;
+  });
+}
+void _toggleScreenSize() {
+  setState(() {
+    _screenSize = !_screenSize;
+  });
+}
 
   @override
   void initState() {
@@ -52,13 +70,24 @@ class _MyAppState extends State<MyApp> {
     _errorStreamSubscription = null;
     _cameraClosingStreamSubscription?.cancel();
     _cameraClosingStreamSubscription = null;
-    
+
     _initializeCamera();
     super.dispose();
   }
- double _counter = 0;
-  GlobalKey key = GlobalKey();
 
+  double _cameraRotation = 0.0;
+
+  double _counter = 0; // Counter used in the ContextualMenu
+  GlobalKey key = GlobalKey(); // Key for the ContextualMenu
+  void _rotateCameraVisuals() {
+    setState(() {
+      _cameraRotation += 90.0;
+      // Ensure the rotation stays within 0 to 360 degrees
+      _cameraRotation = _cameraRotation % 360;
+    });
+  }
+
+  // Increment the counter
   void _incrementCounter() async {
     await Future.delayed(const Duration(milliseconds: 500));
     debugPrint('awaited successfully');
@@ -68,6 +97,7 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
+  // Decrement the counter
   void _decrementCounter() async {
     await Future.delayed(const Duration(milliseconds: 500));
     debugPrint('awaited successfully');
@@ -75,7 +105,8 @@ class _MyAppState extends State<MyApp> {
       _counter--;
     });
   }
-  /// Fetches list of available cameras from camera_windows plugin.
+
+  // Fetches list of available cameras
   Future<void> _fetchCameras() async {
     String cameraInfo;
     List<CameraDescription> cameras = <CameraDescription>[];
@@ -102,7 +133,7 @@ class _MyAppState extends State<MyApp> {
     }
   }
 
-  /// Initializes the camera on the device.
+  // Initializes the camera on the device
   Future<void> _initializeCamera() async {
     assert(!_initialized);
 
@@ -170,13 +201,12 @@ class _MyAppState extends State<MyApp> {
           _previewSize = null;
           _recording = false;
           _recordingTimed = false;
-          // _cameraInfo =
-          //     ' ${e.code}: ${e.description}';
         });
       }
     }
   }
 
+  // Dispose the currently active camera
   Future<void> _disposeCurrentCamera() async {
     if (_cameraId >= 0 && _initialized) {
       try {
@@ -190,81 +220,30 @@ class _MyAppState extends State<MyApp> {
             _recording = false;
             _recordingTimed = false;
             _previewPaused = false;
-            // _cameraInfo = 'Camera disposed';
           });
         }
       } on CameraException catch (e) {
         if (mounted) {
           setState(() {
-            _cameraInfo =
-                ' ${e.code}: ${e.description}';
+            _cameraInfo = ' ${e.code}: ${e.description}';
           });
         }
       }
     }
   }
 
+  // Build the camera preview widget
   Widget _buildPreview() {
     return CameraPlatform.instance.buildPreview(_cameraId);
   }
 
+  // Take a picture using the camera
   Future<void> _takePicture() async {
     final XFile file = await CameraPlatform.instance.takePicture(_cameraId);
     _showInSnackBar('Picture captured to: ${file.path}');
   }
 
-  // Future<void> _recordTimed(int seconds) async {
-  //   if (_initialized && _cameraId > 0 && !_recordingTimed) {
-  //     unawaited(CameraPlatform.instance
-  //         .onVideoRecordedEvent(_cameraId)
-  //         .first
-  //         .then((VideoRecordedEvent event) async {
-  //       if (mounted) {
-  //         setState(() {
-  //           _recordingTimed = false;
-  //         });
-
-  //         _showInSnackBar('Video captured to: ${event.file.path}');
-  //       }
-  //     }));
-
-  //     await CameraPlatform.instance.startVideoRecording(
-  //       _cameraId,
-  //       maxVideoDuration: Duration(seconds: seconds),
-  //     );
-
-  //     if (mounted) {
-  //       setState(() {
-  //         _recordingTimed = true;
-  //       });
-  //     }
-  //   }
-  // }
-
-  // Future<void> _toggleRecord() async {
-  //   if (_initialized && _cameraId > 0) {
-  //     if (_recordingTimed) {
-  //       /// Request to stop timed recording short.
-  //       await CameraPlatform.instance.stopVideoRecording(_cameraId);
-  //     } else {
-  //       if (!_recording) {
-  //         await CameraPlatform.instance.startVideoRecording(_cameraId);
-  //       } else {
-  //         final XFile file =
-  //             await CameraPlatform.instance.stopVideoRecording(_cameraId);
-
-  //         _showInSnackBar('Video captured to: ${file.path}');
-  //       }
-
-  //       if (mounted) {
-  //         setState(() {
-  //           _recording = !_recording;
-  //         });
-  //       }
-  //     }
-  //   }
-  // }
-
+  // Toggle the camera preview pause
   Future<void> _togglePreview() async {
     if (_initialized && _cameraId >= 0) {
       if (!_previewPaused) {
@@ -280,9 +259,9 @@ class _MyAppState extends State<MyApp> {
     }
   }
 
+  // Switch between available cameras
   Future<void> _switchCamera() async {
     if (_cameras.isNotEmpty) {
-      // select next index;
       _cameraIndex = (_cameraIndex + 1) % _cameras.length;
       if (_initialized && _cameraId >= 0) {
         await _disposeCurrentCamera();
@@ -296,28 +275,29 @@ class _MyAppState extends State<MyApp> {
     }
   }
 
+  // Handle changes in camera resolution
   Future<void> _onResolutionChange(ResolutionPreset newValue) async {
     setState(() {
       _resolutionPreset = newValue;
     });
     if (_initialized && _cameraId >= 0) {
-      // Re-inits camera with new resolution preset.
       await _disposeCurrentCamera();
       await _initializeCamera();
     }
   }
 
+  // Toggle audio recording
   Future<void> _onAudioChange(bool recordAudio) async {
     setState(() {
       _recordAudio = recordAudio;
     });
     if (_initialized && _cameraId >= 0) {
-      // Re-inits camera with new record audio setting.
       await _disposeCurrentCamera();
       await _initializeCamera();
     }
   }
 
+  // Handle camera error events
   void _onCameraError(CameraErrorEvent event) {
     if (mounted) {
       _scaffoldMessengerKey.currentState?.showSnackBar(
@@ -329,12 +309,14 @@ class _MyAppState extends State<MyApp> {
     }
   }
 
+  // Handle camera closing events
   void _onCameraClosing(CameraClosingEvent event) {
     if (mounted) {
       _showInSnackBar('Camera is closing');
     }
   }
 
+  // Show a message in a snack bar
   void _showInSnackBar(String message) {
     _scaffoldMessengerKey.currentState?.showSnackBar(SnackBar(
       content: Text(message),
@@ -347,6 +329,7 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
+    // Create a list of dropdown items for camera resolution presets
     final List<DropdownMenuItem<ResolutionPreset>> resolutionItems =
         ResolutionPreset.values
             .map<DropdownMenuItem<ResolutionPreset>>((ResolutionPreset value) {
@@ -401,8 +384,8 @@ class _MyAppState extends State<MyApp> {
                         onPressed: _initialized
                             ? _disposeCurrentCamera
                             : _initializeCamera,
-                        child:
-                            Text(_initialized ? 'Dispose camera' : 'Create camera'),
+                        child: Text(
+                            _initialized ? 'Dispose camera' : 'Create camera'),
                       ),
                       const SizedBox(width: 5),
                       ElevatedButton(
@@ -416,42 +399,43 @@ class _MyAppState extends State<MyApp> {
                           _previewPaused ? 'Resume preview' : 'Pause preview',
                         ),
                       ),
-                       Padding(
-      padding: const EdgeInsets.all(12.0),
-      child: ContextualMenu(
-        targetWidgetKey: key,
-        ctx: context,
-        maxColumns: 1,
-        backgroundColor: Colors.red,
-        highlightColor: Colors.white,
-        onDismiss: () {
-          setState(() {
-            _counter = _counter * 1.2;
-          });
-        },
-        items: [
-          CustomPopupMenuItem(
-            press: _incrementCounter,
-            title: 'increment',
-            textAlign: TextAlign.justify,
-            textStyle: const TextStyle(color: Colors.black),
-            image: const Icon(Icons.add, color: Colors.black),
-          ),
-          CustomPopupMenuItem(
-            press: _decrementCounter,
-            title: 'decrement',
-            textAlign: TextAlign.justify,
-            textStyle: const TextStyle(color: Colors.black),
-            image: const Icon(Icons.remove, color: Colors.black),
-          ),
-        ],
-        child: Icon(
-          Icons.add,
-          key: key,
-          color: Colors.black,
-        ),
-      ),
-    ),
+                      Padding(
+                        padding: const EdgeInsets.all(12.0),
+                        child: ContextualMenu(
+                          targetWidgetKey: key,
+                          ctx: context,
+                          maxColumns: 1,
+                          backgroundColor: Colors.red,
+                          highlightColor: Colors.white,
+                          onDismiss: () {
+                            setState(() {
+                              _counter = _counter * 1.2;
+                            });
+                          },
+                          items: [
+                            CustomPopupMenuItem(
+                              press: _incrementCounter,
+                              title: 'increment',
+                              textAlign: TextAlign.justify,
+                              textStyle: const TextStyle(color: Colors.black),
+                              image: const Icon(Icons.add, color: Colors.black),
+                            ),
+                            CustomPopupMenuItem(
+                              press: _decrementCounter,
+                              title: 'decrement',
+                              textAlign: TextAlign.justify,
+                              textStyle: const TextStyle(color: Colors.black),
+                              image:
+                                  const Icon(Icons.remove, color: Colors.black),
+                            ),
+                          ],
+                          child: Icon(
+                            Icons.add,
+                            key: key,
+                            color: Colors.black,
+                          ),
+                        ),
+                      ),
                       const SizedBox(width: 5),
                       // ElevatedButton(
                       //   onPressed: _initialized ? _toggleRecord : null,
@@ -470,6 +454,12 @@ class _MyAppState extends State<MyApp> {
                       //     'Record 5 seconds',
                       //   ),
                       // ),
+                      ElevatedButton(
+                        onPressed: () {
+                          _showBrightnessPopup();
+                        },
+                        child: Text("Brightness"),
+                      ),
                       if (_cameras.length > 1) ...<Widget>[
                         const SizedBox(width: 5),
                         ElevatedButton(
@@ -493,7 +483,8 @@ class _MyAppState extends State<MyApp> {
                           maxHeight: 500,
                         ),
                         child: AspectRatio(
-                          aspectRatio: _previewSize!.width / _previewSize!.height,
+                          aspectRatio:
+                              _previewSize!.width / _previewSize!.height,
                           // child: _buildPreview(),
                         ),
                       ),
@@ -508,189 +499,257 @@ class _MyAppState extends State<MyApp> {
               ],
             ),
 
-
 //Klass-Education Widget<--------------------------------------------------------------->
-             Positioned(
-              left: 100,
-              top: 100,
-              child: Container(
-                width: 738 / 2,
-                height: 524 / 2,
-                decoration: ShapeDecoration(
-                  color: Colors.black,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(11),
-                  ),
-                  shadows: [
-                    const BoxShadow(
-                      color: Color(0x2B000000),
-                      blurRadius: 8,
-                      offset: Offset(15, 15),
-                      spreadRadius: -5,
-                    )
-                  ],
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    //<------------------------------------------------<Row 1>---------------------->
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20,vertical: 10),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                           GestureDetector(
-                            onTap:(){_initializeCamera(); _switchCamera();},
-                             child: Row(
-                               children: [
-                                 SizedBox(
-                                  width: 150,
-                                   child: Text(
-                                    _cameraInfo,
-                                    maxLines: 1,
-                           
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 14,
-                                      fontFamily: 'Roboto',
-                                      fontWeight: FontWeight.w500,
-                                      height: 0,
-                                      
-                                    ),
-                                                           ),
-                                 ),
-                                                     const Icon(
-                                  Icons.arrow_drop_down,
-                                  color: Colors.white,
-                                                     ),
-                               ],
-                             ),
-                           ),
-                          const Spacer(),
-                          Container(
-                            width: 18,
-                            height: 18,
-                            decoration: const ShapeDecoration(
-                              color: Color(0xFF656565),
-                              shape: OvalBorder(),
-                            ),
-                            child: const Icon(
-                              Icons.close,
-                              color: Colors.black,
-                              size: 18,
-                            ),
-                          ),
-                        ],
-                      ),
+            Positioned(
+                left: 100,
+                top: 100,
+                child: Container(
+                  width:_screenSize? 400:300 ,
+                  // (_cameraRotation== 90||_cameraRotation == 270)?
+                height: _screenSize? 450 :337 ,
+                  decoration: ShapeDecoration(
+                    color: Colors.black,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(11),
                     ),
-                    //<------------------------------------------------<Row 2>---------------------->
-                    Expanded(
-                      child: Stack(
-                        children: [ 
-                          
-                          Container(
-                            // width: 661 / 2,
-                            // height: 382 / 2,
-                          margin: EdgeInsets.symmetric(horizontal: 20),
- constraints: const BoxConstraints(
-                          maxHeight: 500,
-                        ),
-                            decoration: ShapeDecoration(
-                              color: const Color(0xFFD9D9D9),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(7),
+                    shadows: [
+                      const BoxShadow(
+                        color: Color(0x2B000000),
+                        blurRadius: 8,
+                        offset: Offset(15, 15),
+                        spreadRadius: -5,
+                      )
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      //<------------------------------------------------<Row 1>---------------------->
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 10),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            GestureDetector(
+                              onTap: () {
+                                _initializeCamera();
+                                _switchCamera();
+                              },
+                              child: Row(
+                                children: [
+                                  SizedBox(
+                                    width: 150,
+                                    child: Text(
+                                      _cameraInfo,
+                                      maxLines: 1,
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 14,
+                                        fontFamily: 'Roboto',
+                                        fontWeight: FontWeight.w500,
+                                        height: 0,
+                                      ),
+                                    ),
+                                  ),
+                                  const Icon(
+                                    Icons.arrow_drop_down,
+                                    color: Colors.white,
+                                  ),
+                                ],
                               ),
                             ),
-                            child: Center(child: _buildPreview()),
-                          ),
-                          Positioned(
-                            right: 25,
-                            bottom: 5,
-                            child:   Container(
-                            width: 30,
-                            height: 30,
-                            decoration: const ShapeDecoration(
-                              color: Color(0xFF656565),
-                              shape: OvalBorder(),
+                            const Spacer(),
+                            Container(
+                              width: 18,
+                              height: 18,
+                              decoration: const ShapeDecoration(
+                                color: Color(0xFF656565),
+                                shape: OvalBorder(),
+                              ),
+                              child: const Icon(
+                                Icons.close,
+                                color: Colors.black,
+                                size: 18,
+                              ),
                             ),
-                            child: const Icon(
-                              Icons.fullscreen_sharp,
-                              color: Colors.white,
-                              size: 20,
-                            ),
-                          ),)
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                    //<------------------------------------------------<Row 3>---------------------->
-                     Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 20,vertical: 5),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          Icon(
-                            Icons.flip,
-                            color: Colors.white,
-                          ),
-                          Icon(
-                            Icons.rotate_left,
-                            color: Colors.white,
-                          ),
-                          SizedBox(
-                            height: 40,
-                            child: VerticalDivider(
-                              color: Colors.white,
-                              width: 5,
-                              thickness: 1,
-                              indent: 10,
-                              endIndent: 10,
+                      //<------------------------------------------------<Row 2>---------------------->
+                      Expanded(
+                        child: Stack(
+                          children: [
+                            Container(
+                              // width: 661 / 2,
+                              // height: 661 / 2,
+                              margin: EdgeInsets.symmetric(horizontal: 20),
+                              constraints: const BoxConstraints(
+                                maxHeight: 500,
+                              ),
+                              // decoration: ShapeDecoration(
+                              //   color: const Color(0xFFD9D9D9),
+                              //   shape: RoundedRectangleBorder(
+                              //     borderRadius: BorderRadius.circular(7),
+                              //   ),
+                                
+                              // ),
+                              child: Center(
+                                child: Transform(
+    alignment: Alignment.center,
+    transform: Matrix4.identity()..scale(_isMirrored ? -1.0 : 1.0, 1.0),
+                                  child: Transform.rotate(
+                                    angle: _cameraRotation *
+                                        (3.14159265359 /
+                                            180), // Convert degrees to radians
+                                    child: _buildPreview(),
+                                  ),
+                                ),
+                              ),
                             ),
-                          ),
+                            Positioned(
+                              right: 25,
+                              bottom: 5,
+                              child: Container(
+                                width: 30,
+                                height: 30,
+                                decoration: const ShapeDecoration(
+                                  color: Color(0xFF656565),
+                                  shape: OvalBorder(),
+                                ),
+                                child:  Center(
+                                  child: IconButton(
+                                                              onPressed: _toggleScreenSize,
+                                                              icon: const Icon(
+                                    Icons.fullscreen_sharp,
+                                    color: Colors.white,
+                                    size: 20,
+                                  ),
+                                                            ),
+                                ),
+                              ),
+                            )
+                          ],
+                        ),
+                      ),
+                      //<------------------------------------------------<Row 3>---------------------->
+                      Padding(
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
                             IconButton(
-                        onPressed: _initialized ? _togglePreview : null,
-                        icon: Icon(
-                            Icons.severe_cold,
-                            color: Colors.white,
-                          ),
-                      ),
-                         
-                         IconButton(
-                        onPressed: _initialized ? _takePicture : null,
-                        icon: Icon(
-                            Icons.camera_outlined,
-                            color: Colors.white,
-                          ),
-                      ), 
-                          SizedBox(
-                            height: 40,
-                            child: VerticalDivider(
-                              color: Colors.white,
-                              width: 5,
-                              thickness: 1,
-                              indent: 10,
-                              endIndent: 10,
+                              onPressed: _toggleMirror,
+                              icon: Icon(
+                                Icons.flip,
+                                color: Colors.white,
+                              ),
                             ),
-                          ),
-                          Icon(
-                            Icons.brightness_6_outlined,
-                            color: Colors.white,
-                          ),
-                          Icon(
-                            Icons.zoom_in,
-                            color: Colors.white,
-                          ),
-                        
-                        ],
+                            IconButton(
+                              onPressed: _rotateCameraVisuals,
+                              icon: Icon(
+                                Icons.rotate_left,
+                                color: Colors.white,
+                              ),
+                            ),
+                            SizedBox(
+                              height: 40,
+                              child: VerticalDivider(
+                                color: Colors.white,
+                                width: 5,
+                                thickness: 1,
+                                indent: 10,
+                                endIndent: 10,
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: _initialized ? _togglePreview : null,
+                              icon: Icon(
+                                Icons.severe_cold,
+                                color: Colors.white,
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: _initialized ? _takePicture : null,
+                              icon: Icon(
+                                Icons.camera_outlined,
+                                color: Colors.white,
+                              ),
+                            ),
+                            SizedBox(
+                              height: 40,
+                              child: VerticalDivider(
+                                color: Colors.white,
+                                width: 5,
+                                thickness: 1,
+                                indent: 10,
+                                endIndent: 10,
+                              ),
+                            ),
+                            Icon(
+                              Icons.brightness_6_outlined,
+                              color: Colors.white,
+                            ),
+                            Icon(
+                              Icons.zoom_in,
+                              color: Colors.white,
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ))
-              
+                    ],
+                  ),
+                ))
+
 //Klass-Education Widget<--------------------------------------------------->
           ],
         ),
       ),
+    );
+  }
+
+  void _showBrightnessPopup() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Adjust Brightness'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconButton(
+                    icon: Icon(Icons.remove),
+                    onPressed: () {
+                      setState(() {
+                        brightnessLevel -= 10;
+                      });
+                    },
+                  ),
+                  Text('Brightness: $brightnessLevel'),
+                  IconButton(
+                    icon: Icon(Icons.add),
+                    onPressed: () {
+                      setState(() {
+                        brightnessLevel += 10;
+                      });
+                    },
+                  ),
+                ],
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: Text('Close'),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
