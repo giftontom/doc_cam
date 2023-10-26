@@ -41,51 +41,46 @@ class _DocCamState extends State<DocCam> {
   bool _isMirrored = false; // Initial state: not mirrored
   bool _screenSize = false; // Initial state: not mirrored
 
-double _brightnessLevel = 100.0; // Initial brightness level (0%)
-double _maxBrightness = 100.0;  // Maximum brightness level (100%)
-double _minBrightness = 0.0;   // Minimum brightness level (0%)
+  double _brightnessLevel = 100.0; // Initial brightness level (0%)
+  double _maxBrightness = 100.0; // Maximum brightness level (100%)
+  double _minBrightness = 0.0; // Minimum brightness level (0%)
 
-double _zoomLevel = 100.0; // Initial zoom level (100%)
-double _maxZoom = 200.0;   // Maximum zoom level (200%)
-double _minZoom = 100.0;   // Minimum zoom level (100%)
-double _zoomStep = 10.0;   // Zoom step (10%)
+  double _zoomLevel = 100.0; // Initial zoom level (100%)
+  double _maxZoom = 200.0; // Maximum zoom level (200%)
+  double _minZoom = 100.0; // Minimum zoom level (100%)
+  double _zoomStep = 10.0; // Zoom step (10%)
 
+  void _zoomIn() {
+    setState(() {
+      if (_zoomLevel < _maxZoom) {
+        _zoomLevel += _zoomStep; // Increase zoom by the zoom step
+      }
+    });
+  }
 
+  void _zoomOut() {
+    setState(() {
+      if (_zoomLevel > _minZoom) {
+        _zoomLevel -= _zoomStep; // Decrease zoom by the zoom step
+      }
+    });
+  }
 
-void _zoomIn() {
-  setState(() {
-    if (_zoomLevel < _maxZoom) {
-      _zoomLevel += _zoomStep; // Increase zoom by the zoom step
-    }
-  });
-}
+  void _increaseBrightness() {
+    setState(() {
+      if (_brightnessLevel < _maxBrightness) {
+        _brightnessLevel += 10.0; // Increase brightness by 10%
+      }
+    });
+  }
 
-void _zoomOut() {
-  setState(() {
-    if (_zoomLevel > _minZoom) {
-      _zoomLevel -= _zoomStep; // Decrease zoom by the zoom step
-    }
-  });
-}
-
-
-
-void _increaseBrightness() {
-  setState(() {
-    if (_brightnessLevel < _maxBrightness) {
-      _brightnessLevel += 10.0; // Increase brightness by 10%
-    }
-  });
-}
-
-void _decreaseBrightness() {
-  setState(() {
-    if (_brightnessLevel > _minBrightness) {
-      _brightnessLevel -= 10.0; // Decrease brightness by 10%
-    }
-  });
-}
-
+  void _decreaseBrightness() {
+    setState(() {
+      if (_brightnessLevel > _minBrightness) {
+        _brightnessLevel -= 10.0; // Decrease brightness by 10%
+      }
+    });
+  }
 
   void _toggleMirror() {
     setState(() {
@@ -275,22 +270,23 @@ void _decreaseBrightness() {
       }
     }
   }
+
   // Build the camera preview widget
   Widget _buildPreview() {
-  final brightness = (_brightnessLevel / _maxBrightness).clamp(0.0, 1.0);
-final zoomFactor = (_zoomLevel / 100.0).clamp(1.0, _maxZoom / 100.0);
+    final brightness = (_brightnessLevel / _maxBrightness).clamp(0.0, 1.0);
+    final zoomFactor = (_zoomLevel / 100.0).clamp(1.0, _maxZoom / 100.0);
 
-  return ColorFiltered(
-    colorFilter: ColorFilter.mode(
-      Colors.white.withOpacity(brightness), // Adjust brightness here
-      BlendMode.modulate, // Modify the blend mode as needed
-    ),
-    child: Transform.scale(
-      scale:zoomFactor ,
-      child: CameraPlatform.instance.buildPreview(_cameraId)),
-  );
-}
-  
+    return ColorFiltered(
+      colorFilter: ColorFilter.mode(
+        Colors.white.withOpacity(brightness), // Adjust brightness here
+        BlendMode.modulate, // Modify the blend mode as needed
+      ),
+      child: Transform.scale(
+          scale: zoomFactor,
+          child: CameraPlatform.instance.buildPreview(_cameraId)),
+    );
+  }
+
   // Take a picture using the camera
   Future<void> _takePicture() async {
     final XFile file = await CameraPlatform.instance.takePicture(_cameraId);
@@ -381,6 +377,7 @@ final zoomFactor = (_zoomLevel / 100.0).clamp(1.0, _maxZoom / 100.0);
   final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey =
       GlobalKey<ScaffoldMessengerState>();
 
+//Widget Build<-------------------------------------------------------------------------------->
   @override
   Widget build(BuildContext context) {
     // Create a list of dropdown items for camera resolution presets
@@ -452,67 +449,6 @@ final zoomFactor = (_zoomLevel / 100.0).clamp(1.0, _maxZoom / 100.0);
                         child: Text(
                           _previewPaused ? 'Resume preview' : 'Pause preview',
                         ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(12.0),
-                        child: ContextualMenu(
-                          targetWidgetKey: key,
-                          ctx: context,
-                          maxColumns: 1,
-                          backgroundColor: Colors.red,
-                          highlightColor: Colors.white,
-                          onDismiss: () {
-                            setState(() {
-                              _counter = _counter * 1.2;
-                            });
-                          },
-                          items: [
-                            CustomPopupMenuItem(
-                              press: _incrementCounter,
-                              title: 'increment',
-                              textAlign: TextAlign.justify,
-                              textStyle: const TextStyle(color: Colors.black),
-                              image: const Icon(Icons.add, color: Colors.black),
-                            ),
-                            CustomPopupMenuItem(
-                              press: _decrementCounter,
-                              title: 'decrement',
-                              textAlign: TextAlign.justify,
-                              textStyle: const TextStyle(color: Colors.black),
-                              image:
-                                  const Icon(Icons.remove, color: Colors.black),
-                            ),
-                          ],
-                          child: Icon(
-                            Icons.add,
-                            key: key,
-                            color: Colors.black,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 5),
-                      // ElevatedButton(
-                      //   onPressed: _initialized ? _toggleRecord : null,
-                      //   child: Text(
-                      //     (_recording || _recordingTimed)
-                      //         ? 'Stop recording'
-                      //         : 'Record Video',
-                      //   ),
-                      // ),
-                      // const SizedBox(width: 5),
-                      // ElevatedButton(
-                      //   onPressed: (_initialized && !_recording && !_recordingTimed)
-                      //       ? () => _recordTimed(5)
-                      //       : null,
-                      //   child: const Text(
-                      //     'Record 5 seconds',
-                      //   ),
-                      // ),
-                      ElevatedButton(
-                        onPressed: () {
-                          _showBrightnessPopup();
-                        },
-                        child: const Text("Brightness"),
                       ),
                       if (_cameras.length > 1) ...<Widget>[
                         const SizedBox(width: 5),
@@ -632,57 +568,52 @@ final zoomFactor = (_zoomLevel / 100.0).clamp(1.0, _maxZoom / 100.0);
                       ),
                       //<------------------------------------------------<Row 2>---------------------->
                       Expanded(
-  child: Stack(
-    children: [
-      Container(
-        margin: const EdgeInsets.symmetric(horizontal: 20),
-        constraints: const BoxConstraints(
-          // maxHeight: 500,
-        ),
-        // decoration: ShapeDecoration(
-        //   color: const Color(0xFFD9D9D9),
-        //   shape: RoundedRectangleBorder(
-        //     borderRadius: BorderRadius.circular(7),
-        //   ),
-        // ),
-        child: Center(
-          child: ClipRect(
-            child: Transform(
-              alignment: Alignment.center,
-              transform: Matrix4.identity()..scale(_isMirrored ? -1.0 : 1.0, 1.0),
-              child: Transform.rotate(
-                angle: _cameraRotation * (3.14159265359 / 180),
-                child: _buildPreview(),
-              ),
-            ),
-          ),
-        ),
-      ),
-      Positioned(
-        right: 25,
-        bottom: 5,
-        child: Container(
-          width: 35,
-          height: 35,
-          decoration: const ShapeDecoration(
-            color: Color(0xFF656565),
-            shape: OvalBorder(),
-          ),
-          child: Center(
-            child: IconButton(
-              onPressed: _toggleScreenSize,
-              icon: const Icon(
-                Icons.fullscreen_sharp,
-                color: Colors.white,
-                size: 18,
-              ),
-            ),
-          ),
-        ),
-      )
-    ],
-  ),
-),
+                        child: Stack(
+                          children: [
+                            Container(
+                              margin:
+                                  const EdgeInsets.symmetric(horizontal: 20),
+                              
+                              child: Center(
+                                child: ClipRect(
+                                  child: Transform(
+                                    alignment: Alignment.center,
+                                    transform: Matrix4.identity()
+                                      ..scale(_isMirrored ? -1.0 : 1.0, 1.0),
+                                    child: Transform.rotate(
+                                      angle: _cameraRotation *
+                                          (3.14159265359 / 180),
+                                      child: _buildPreview(),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              right: 25,
+                              bottom: 5,
+                              child: Container(
+                                width: 35,
+                                height: 35,
+                                decoration: const ShapeDecoration(
+                                  color: Color(0xFF656565),
+                                  shape: OvalBorder(),
+                                ),
+                                child: Center(
+                                  child: IconButton(
+                                    onPressed: _toggleScreenSize,
+                                    icon: const Icon(
+                                      Icons.fullscreen_sharp,
+                                      color: Colors.white,
+                                      size: 18,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            )
+                          ],
+                        ),
+                      ),
 
                       //<------------------------------------------------<Row 3>---------------------->
                       Padding(
@@ -742,7 +673,10 @@ final zoomFactor = (_zoomLevel / 100.0).clamp(1.0, _maxZoom / 100.0);
                             Row(
                               children: [
                                 SpeedDial(
-                                  icon: Icons.brightness_6_outlined,
+                                  child: Icon(
+                                    Icons.brightness_6_outlined,
+                                    color: Colors.white,
+                                  ),
                                   iconTheme:
                                       const IconThemeData(color: Colors.white),
                                   backgroundColor: Colors.black,
@@ -751,7 +685,7 @@ final zoomFactor = (_zoomLevel / 100.0).clamp(1.0, _maxZoom / 100.0);
                                   // renderOverlay: false,
                                   closeManually: true,
                                   curve: Curves.bounceInOut,
-                                  buttonSize: Size(50.00, 50.00),
+                                  buttonSize: Size(56.00, 56.00),
                                   childrenButtonSize: const Size(50, 100),
                                   spaceBetweenChildren: 0,
                                   spacing: 0,
@@ -773,7 +707,8 @@ final zoomFactor = (_zoomLevel / 100.0).clamp(1.0, _maxZoom / 100.0);
                                                 color: Colors.black,
                                               ),
                                             ),
-                                            Text(" ${_brightnessLevel.toInt()}%"),
+                                            Text(
+                                                " ${_brightnessLevel.toInt()}%"),
                                             IconButton(
                                               onPressed: _decreaseBrightness,
                                               icon: const Icon(
@@ -787,8 +722,11 @@ final zoomFactor = (_zoomLevel / 100.0).clamp(1.0, _maxZoom / 100.0);
                                     ),
                                   ],
                                 ),
-                                  SpeedDial(
-                                  child: Icon(Icons.zoom_in,color: Colors.white,),
+                                SpeedDial(
+                                  child: Icon(
+                                    Icons.zoom_in,
+                                    color: Colors.white,
+                                  ),
                                   iconTheme:
                                       const IconThemeData(color: Colors.white),
                                   backgroundColor: Colors.black,
@@ -797,9 +735,9 @@ final zoomFactor = (_zoomLevel / 100.0).clamp(1.0, _maxZoom / 100.0);
                                   // renderOverlay: false,
                                   closeManually: true,
                                   curve: Curves.bounceInOut,
-                                  buttonSize: Size(50.00, 50.00),
+                                  buttonSize: Size(56.00, 56.00),
                                   childrenButtonSize: const Size(50, 100),
-                                  
+
                                   spaceBetweenChildren: 0,
                                   spacing: 0,
                                   childPadding: EdgeInsets.all(0),
@@ -832,7 +770,7 @@ final zoomFactor = (_zoomLevel / 100.0).clamp(1.0, _maxZoom / 100.0);
                                       shape: const StadiumBorder(),
                                     ),
                                   ],
-                                                            ),
+                                ),
                               ],
                             ),
                           ],
@@ -849,47 +787,5 @@ final zoomFactor = (_zoomLevel / 100.0).clamp(1.0, _maxZoom / 100.0);
     );
   }
 
-  void _showBrightnessPopup() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Adjust Brightness'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.remove),
-                    onPressed: () {
-                      setState(() {
-                        brightnessLevel -= 10;
-                      });
-                    },
-                  ),
-                  Text('Brightness: $brightnessLevel'),
-                  IconButton(
-                    icon: const Icon(Icons.add),
-                    onPressed: () {
-                      setState(() {
-                        brightnessLevel += 10;
-                      });
-                    },
-                  ),
-                ],
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                child: const Text('Close'),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
+//Widget Build<-------------------------------------------------------------------------------->
 }
