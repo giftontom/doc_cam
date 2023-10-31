@@ -38,6 +38,7 @@ dependencies:
   camera_windows: ^0.2.1+8
   popup_menu_2: ^0.0.8
   flutter_speed_dial: ^7.0.0
+  math_expressions: ^2.4.0
 
 dev_dependencies:
   flutter_test:

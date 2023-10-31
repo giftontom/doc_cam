@@ -5,6 +5,7 @@
 import 'dart:async';
 
 import 'package:camera_platform_interface/camera_platform_interface.dart';
+import 'package:doc_cam/sci_calc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
@@ -491,7 +492,7 @@ class _DocCamState extends State<DocCam> {
 
 //Klass-Education Widget<--------------------------------------------------------------->
             Positioned(
-                left: 100,
+                left: 10,
                 top: 100,
                 child: Container(
                   width: _screenSize ? 600 : 400,
@@ -673,7 +674,7 @@ class _DocCamState extends State<DocCam> {
                             Row(
                               children: [
                                 SpeedDial(
-                                  child: Icon(
+                                  child: const Icon(
                                     Icons.brightness_6_outlined,
                                     color: Colors.white,
                                   ),
@@ -685,12 +686,12 @@ class _DocCamState extends State<DocCam> {
                                   // renderOverlay: false,
                                   closeManually: true,
                                   curve: Curves.bounceInOut,
-                                  buttonSize: Size(56.00, 56.00),
+                                  buttonSize: const Size(56.00, 56.00),
                                   childrenButtonSize: const Size(50, 100),
                                   spaceBetweenChildren: 0,
                                   spacing: 0,
-                                  childPadding: EdgeInsets.all(0),
-                                  childMargin: EdgeInsets.all(0),
+                                  childPadding: const EdgeInsets.all(0),
+                                  childMargin: const EdgeInsets.all(0),
                                   closeDialOnPop: false,
                                   elevation: 0,
                                   children: [
@@ -723,7 +724,7 @@ class _DocCamState extends State<DocCam> {
                                   ],
                                 ),
                                 SpeedDial(
-                                  child: Icon(
+                                  child: const Icon(
                                     Icons.zoom_in,
                                     color: Colors.white,
                                   ),
@@ -735,13 +736,13 @@ class _DocCamState extends State<DocCam> {
                                   // renderOverlay: false,
                                   closeManually: true,
                                   curve: Curves.bounceInOut,
-                                  buttonSize: Size(56.00, 56.00),
+                                  buttonSize: const Size(56.00, 56.00),
                                   childrenButtonSize: const Size(50, 100),
 
                                   spaceBetweenChildren: 0,
                                   spacing: 0,
-                                  childPadding: EdgeInsets.all(0),
-                                  childMargin: EdgeInsets.all(0),
+                                  childPadding: const EdgeInsets.all(0),
+                                  childMargin: const EdgeInsets.all(0),
                                   elevation: 0,
                                   children: [
                                     SpeedDialChild(
@@ -778,9 +779,14 @@ class _DocCamState extends State<DocCam> {
                       ),
                     ],
                   ),
-                ))
+                )),
 
 //Klass-Education Widget<--------------------------------------------------->
+
+const Positioned(
+  right: 10,
+  top: 50,
+  child: Calculator_App())
           ],
         ),
       ),
